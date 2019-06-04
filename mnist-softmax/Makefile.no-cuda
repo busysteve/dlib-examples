@@ -1,0 +1,11 @@
+
+my_dlib_mnist-2: my_dlib_mnist-2.o dlib_source2.o Makefile.no-cuda
+	g++ -omp -std=c++11 -DDLIB_USE_LAPACK -DDLIB_USE_BLAS -o my_dlib_mnist-2 my_dlib_mnist-1.o dlib_source2.o -L/home/smathews/dlib.d/dlib -ldlib -lblas -llapack -lX11 -lXrender -lpthread -ldl
+
+my_dlib_mnist-2.o: my_dlib_mnist-1.cpp Makefile.no-cuda
+	g++ -omp -std=c++11 -DDLIB_USE_LAPACK -DDLIB_USE_BLAS -c my_dlib_mnist-1.cpp -o my_dlib_mnist-1.o -I/home/smathews/dlib-19.16/
+
+dlib_source2.o: /home/smathews/dlib-19.16/dlib/all/source.cpp Makefile.no-cuda
+	g++ -omp -std=c++11 -DDLIB_USE_LAPACK -DDLIB_USE_BLAS -c /home/smathews/dlib-19.16/dlib/all/source.cpp -o dlib_source2.o -I/home/smathews/dlib-19.15/
+
+
