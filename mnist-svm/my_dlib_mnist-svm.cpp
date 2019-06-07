@@ -13,7 +13,7 @@ using namespace std;
 using namespace dlib;
  
 typedef double raw_type;
-typedef double label_type;
+typedef int label_type;
 typedef matrix<raw_type, 28*28, 1> svm_data_type;
 
 
@@ -35,7 +35,7 @@ void svm_load_mnist_images(
 
 	// Training data read	
 	cout << "Loading training data...." << endl;
-	for( int c=0; c < 6000; c++ )
+	for( int c=0; c < 60000; c++ )
 	{
 		svm_data_type img;
 
@@ -45,14 +45,14 @@ void svm_load_mnist_images(
 		{
 			for( int j=0; j < 28; j++ )
 			{
-				img( i+(j*28), 0 ) = (raw_type) (stash[i][j]);
+				img( i+(j*28), 0 ) = (raw_type) ( (stash[i][j]) );
 			}
 		}
 		training_images.push_back( img );
 
 
 		fread( &stash[0][0], 1, 1, labels );
-		training_labels.push_back( (label_type)(stash[0][0]) );
+		training_labels.push_back( (stash[0][0]) );
 	}
 	fclose( data );
 	fclose( labels );
@@ -68,7 +68,7 @@ void svm_load_mnist_images(
 
 	// Training data read	
 	cout << "Loading testing data...." << endl;
-	for( int c=0; c < 1000; c++ )
+	for( int c=0; c < 10000; c++ )
 	{
 		svm_data_type img;
 
@@ -78,14 +78,14 @@ void svm_load_mnist_images(
 		{
 			for( int j=0; j < 28; j++ )
 			{
-				img( i+(j*28), 0 ) = (label_type) (stash[i][j]);
+				img( i+(j*28), 0 ) = (raw_type) ( (stash[i][j]) );
 			}
 		}
 		testing_images.push_back( img );
 
 
 		fread( &stash[0][0], 1, 1, labels );
-		testing_labels.push_back( (raw_type)(stash[0][0]) );
+		testing_labels.push_back( (stash[0][0]) );
 	}
 	fclose( data );
 	fclose( labels );
@@ -98,32 +98,13 @@ void svm_load_mnist_images(
 
  
 
-// The contents of this file are in the public domain. See LICENSE_FOR_EXAMPLE_PROGRAMS.txt
-/*
-    This is an example illustrating the use of the deep learning tools from the
-    dlib C++ Library.  In it, we will train the venerable LeNet convolutional
-    neural network to recognize hand written digits.  The network will take as
-    input a small image and classify it as one of the 10 numeric digits between
-    0 and 9.
-
-    The specific network we will run is from the paper
-        LeCun, Yann, et al. "Gradient-based learning applied to document recognition."
-        Proceedings of the IEEE 86.11 (1998): 2278-2324.
-    except that we replace the sigmoid non-linearities with rectified linear units. 
-
-    These tools will use CUDA and cuDNN to drastically accelerate network
-    training and testing.  CMake should automatically find them if they are
-    installed and configure things appropriately.  If not, the program will
-    still run but will be much slower to execute.
-*/
-
-
 
 
 using namespace std;
 using namespace dlib;
  
 void print_image( svm_data_type &img, unsigned long label, unsigned long predicted );
+void print_svm_image( svm_data_type &img );
 
 void print_probs( matrix<double,1,10> &softmax_probs, int x );
 
@@ -205,14 +186,35 @@ int main(int argc, char** argv) try
     // numerical stability problems and also prevents one large feature from smothering
     // others.  Doing this doesn't matter much in this example so I'm just doing this here
     // so you can see an easy way to accomplish this with the library.  
-//    vector_normalizer<sample_type> normalizer;
-    vector_normalizer<svm_data_type> normalizer;
     // let the normalizer learn the mean and standard deviation of the samples
-    normalizer.train(training_images);
-    // now normalize each sample
-    for (unsigned long i = 0; i < training_images.size(); ++i)
-        training_images[i] = normalizer(training_images[i]); 
 
+    // now normalize each sample
+    vector_normalizer<svm_data_type> normalizer;
+
+
+	if( !(argc > 2) )
+	{
+		cout << "normalizing training set" << endl;
+
+		normalizer.train(training_images);
+
+		for (unsigned long i = 0; i < training_images.size(); ++i)
+		    training_images[i] = normalizer(training_images[i]); 
+
+	    randomize_samples(training_images, training_labels);
+	}
+
+
+	{
+		cout << "normalizing test set" << endl;
+
+		normalizer.train(testing_images);
+
+		for (unsigned long i = 0; i < testing_images.size(); ++i)
+		    testing_images[i] = normalizer(testing_images[i]); 
+
+    	randomize_samples(testing_images, testing_labels);
+	}
 
     // Now that we have some data we want to train on it.  However, there are two
     // parameters to the training.  These are the nu and gamma parameters.  Our choice for
@@ -224,7 +226,7 @@ int main(int argc, char** argv) try
     // the first half of the samples look like they are from a different distribution than
     // the second half.  This would screw up the cross validation process but we can fix it
     // by randomizing the order of the samples with the following function call.
-    randomize_samples(training_images, training_labels);
+    //randomize_samples(testing_images, testing_labels);
 
 
 
@@ -238,7 +240,9 @@ int main(int argc, char** argv) try
 
 	typedef linear_kernel<svm_data_type> kernel_type;
 
-    svm_multiclass_linear_trainer<kernel_type> svm_trainer;
+    typedef svm_multiclass_linear_trainer<kernel_type, label_type> trainer_type;
+
+	trainer_type svm_trainer;
 
 
 //	typedef one_vs_one_trainer<any_trainer<sample_type> > ovo_trainer;
@@ -264,32 +268,54 @@ int main(int argc, char** argv) try
 
 
 
-   // Now let's do 5-fold cross-validation using the one_vs_one_trainer we just setup.
+    // Now let's do 5-fold cross-validation using the one_vs_one_trainer we just setup.
     // As an aside, always shuffle the order of the samples before doing cross validation.  
     // For a discussion of why this is a good idea see the svm_ex.cpp example.
-    randomize_samples(training_images, training_labels);
-    cout << "cross validation: \n" << cross_validate_multiclass_trainer(svm_trainer, training_images, training_labels, 5) << endl;
-
-
+//    randomize_samples(training_images, training_labels);
+//    cout << "cross validation: \n" << cross_validate_multiclass_trainer(svm_trainer, training_images, training_labels, 5) << endl;
 
 
 
 
     // Next, if you wanted to obtain the decision rule learned by a one_vs_one_trainer you 
     // would store it into a one_vs_one_decision_function.
-    auto df = svm_trainer.train(training_images, training_labels);
+
+	
+    trainer_type::trained_function_type df;
+
+
+
+
+
+	if( argc > 2 )
+	{
+		deserialize( argv[2] ) >> df;
+	}
+	else
+	{
+		cout << "training the svm" << endl;
+		df = svm_trainer.train(training_images, training_labels);
+		serialize( "svm_mnist.dat" ) << df;
+	}
+
+
 
 	int num_right=0, num_wrong=0;
 
 	for( int c = 0; c < testing_images.size(); c++ )
 	{
-		
-    	cout << "predicted label: "<< df(testing_images[c])  << ", true label: "<< testing_labels[c] << endl;
-
 		if( df(testing_images[c]) == testing_labels[c] )
+		{
 			num_right++;
+		}
 		else
+		{
 			num_wrong++;
+			print_svm_image( testing_images[c] );
+			cout 	<< "predicted label: "<< (int)df(testing_images[c])  
+					<< ", true label: "<< (int)testing_labels[c] 
+					<< endl;
+		}
 
 	}
 
@@ -344,20 +370,20 @@ void print_probs( matrix<float,1,10> &softmax_probs, int x )
 	cout << endl;
 }
 
-void print_image( svm_data_type &img, unsigned long label, unsigned long predicted )
+void print_svm_image( svm_data_type &img )
 {
 
-	for( int i=0; i<img.nr(); i++ )
+	for( int i=0; i<28; i++ )
 	{
-		for( int j=0; j<img.nc(); j++ )
+		for( int j=0; j<28; j++ )
 		{
-			cout << ( (img( i, j ) > 150) ? '#' : 
-						( (img( i, j ) > 75) ? '*' : 
-							( (img( i, j ) > 50) ? '-' : ' ' ) ) );
+			cout << ( (img( i+(j*28), 0 ) > .150) ? '#' : 
+						( (img( i+(j*28), 0 ) > .05) ? '*' : 
+							( (img( i+(j*28), 0 ) > .01) ? '-' : ' ' ) ) );
 		}
 		cout << endl;
 	}
-	cout << "label=" << label << "  predicted=" << predicted << endl;
+	//cout << "label=" << label << "  predicted=" << predicted << endl;
 }
 
 
