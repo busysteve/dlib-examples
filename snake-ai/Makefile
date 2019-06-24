@@ -1,6 +1,6 @@
 
 CC = g++
-CFLAGS = -g -std=c++11 
+CFLAGS = -std=c++11 
 OBJS =  window.o snake-ai.o snake-view.o source.o
 INCLUDES = -I/home/smathews/dlib/
 LDFLAGS =  -lcurses -lpthread -ldl -lpng -ljpeg -lblas -llapack -lX11 -lXrender -lXext -lXfixes -lfltk  -ldlib    -L/home/smathews/dlib/examples/build/dlib_build/
@@ -30,6 +30,9 @@ test.o: test.cpp snake-ai.h
 
 clean:
 	rm window.o snake-ai.o snake-view.o snake-ai
+	
+clearnets:
+	rm /tmp/newsnake.net  /tmp/snake1.net  /tmp/snake2.net  /tmp/snake.female.net  /tmp/snake.male.net
 	
 cleanall:
 	rm source.o window.o snake-ai.o snake-view.o snake-ai

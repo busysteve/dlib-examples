@@ -16,53 +16,12 @@ Snake::Snake( )
     , m_dead(false)
     , m_print(false)
     , m_got_food(false)
-    , net( prelu_( rnd.get_double_in_range(.001, .999) ), prelu_( rnd.get_double_in_range( .001, .999 ) ) )
-	, trainer( net )
+    , net(prelu_(rnd.get_double_in_range(.001,.999)), prelu_(rnd.get_double_in_range(.001,.999)))
+    , trainer( net )
 {
 
     
     
-    //net = new net_type( prelu_( rnd.get_double_in_range(.1, .9) ), prelu_( rnd.get_double_in_range( .1, .9 ) ) );
-    
-    //trainer = new dnn_trainer<net_type>( *net );
-    
-    
-    tt::tensor_rand trand;
-  
-
-
-
-    //trand.fill_gaussian( layer<2>(net) );
-    //trand.fill_gaussian( layer<4>(net) );
-
-    
-    
-    if(false) {
-        std::vector< input_matrix_type > vecMats;
-        std::vector< long unsigned int > vecOuts;
-        
-#if 0
-        for( int i=0; i < 1000; i++ )
-        {
-            vecMats.push_back( { 
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100,   
-                        std::rand()%100, std::rand()%100, std::rand()%100   
-            } );
-            
-            vecOuts.push_back( std::rand() % 4 );
-        }
-        
-        trainer.train( vecMats, vecOuts );
-#endif
-
-    }
-    //thx.detach();    
 
 }
 
@@ -74,7 +33,6 @@ void Snake::init( int wx, int wy, const char* snake_net_file )
     
     m_snake.clear();
     
-    ::srand( (unsigned int)time(NULL) );
     
     m_snake.push_back( part(2+std::rand()%wx, 2+std::rand()%wy) );
     m_snake.push_back( part( m_snake.front().x+1, m_snake.front().y ) );
@@ -84,20 +42,8 @@ void Snake::init( int wx, int wy, const char* snake_net_file )
     try
     {
         dlib::deserialize( snake_net_file ) >> m_fnet;    
-	
-	//dlib::net_to_xml( m_fnet, "net.xml" );
-
         net = m_fnet;
     } catch(...){};
-    
-    
-    trainer.set_learning_rate(0.01);
-    trainer.set_min_learning_rate(0.0001);
-    trainer.set_mini_batch_size(100);
-    trainer.set_max_num_epochs( 8000 );
-    //trainer.be_verbose();
-    
-    cerr << net << endl;
     
 }
 
@@ -156,9 +102,17 @@ void Snake::combine( float* x, float* y, float* z )
     for( int i=0; i < 10000; i++ )
     {
         if( ( ::rand() % 2 ) == 0 )
-		z[i] = x[i];
+		z[i] = y[i];
 
     }
+
+    for( int i=0; i < 10000; i++ )
+    {
+        if( (::rand() % 20 ) == 0 )
+            z[i] = rnd.get_double_in_range( .0, .9999 );
+    }
+
+
 }
 
 
@@ -303,12 +257,12 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
         //cout << dw << " : " << db << " : " << df << endl; 
         
 
-        //cout << "look() error" << endl;
+        cout << "look() error" << endl;
 
         return make_pair( -1, 0.0 );
     };
 
-    
+
     //up
     auto saw = look( 0, -1 );
 //    cout << saw.first << " - " << saw.second << endl;
@@ -374,13 +328,14 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
     //cout << (*net)( vecMats ).size() << endl;
     
     direction = net( vecMats )[0];
-    
+   
+#if 0 
     m_last_good_observations.push_back( m_imat ); 
     m_last_good_moves.push_back( direction );
     
     std::vector< long unsigned int > vecOuts = { direction };
  
-    if( (::rand() % 5) == 0 )
+    if( (::rand() % 20) == 0 )
     {
         m_last_good_moves.push_back( ::rand()%4 );
         m_last_good_observations.push_back( { 
@@ -402,6 +357,7 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
 */
     
     //trainer.train_one_step( vecMats );
+#endif
     
 #endif
     
@@ -448,9 +404,7 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
         
         ;// dont drop backpart
 
-        
-        trainer.train( m_last_good_observations, m_last_good_moves );
-
+        //trainer.train( m_last_good_observations, m_last_good_moves );
     }
     else
         m_snake.pop_back();

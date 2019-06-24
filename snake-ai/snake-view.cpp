@@ -21,6 +21,8 @@ SnakeView::SnakeView( )
     ::noecho();
     ::curs_set(0);
     ::clear();
+
+    ::srand( time( NULL ) );
     
     restart();
 }

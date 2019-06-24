@@ -146,7 +146,8 @@ public:
  
     double score()
     {
-        return 1000 * m_snake.size() + m_moves;
+        //return 1000 * m_snake.size() + m_moves*m_moves;
+        return m_moves*m_moves*m_snake.size();
     }
 
     bool dead() { return m_dead; }
