@@ -3,15 +3,17 @@
 //class SnakeView : public Fl_Double_Window
 
 #include <iostream>
+#include "snake-view.h"
 #include "snake-ai.h"
-#include "snake-ai-gui.h"
 
 //std::vector< la::la_vector<double> > vecs;
 
 SnakeView::SnakeView( )
     : m_hiscore(0)
+    , m_hiscorer_count(0)
     , m_iterations(0)
     , m_generations(0)
+    , m_mama_snake(NULL)
 {
     m_snake = nullptr;
     ::initscr();
@@ -35,10 +37,16 @@ void SnakeView::restart()
         ::refresh();
     }
 
-    
+   
+         
     delete m_snake;
-    m_snake = new Snake(  );
-    m_snake->init( 2+std::rand()%32, 2+std::rand()%44, "/tmp/fittest_snake.net" );
+
+    if( m_mama_snake != NULL )
+	m_snake = m_mama_snake->give_birth();
+    else
+        m_snake = new Snake(  );
+
+    m_snake->init( 2+std::rand()%32, 2+std::rand()%44, NULL );
 }
 
 
@@ -62,16 +70,26 @@ void SnakeView::movesnake( )
         
         if( m_hiscore < s )
         {
-            m_snake->serialize( "/tmp/snake.net" );
+            if( (m_hiscorer_count++ % 2 ) == 0 )
+            	m_snake->serialize( "/tmp/snake1.net" );
+            else
+            	m_snake->serialize( "/tmp/snake2.net" );
+		
             m_hiscore = s;
         }
 
         if( m_iterations++ >= 2000 )
         {
-            m_snake->deserialize( "/tmp/snake.net" );
-            m_snake->serialize( "/tmp/fittest_snake.net" );
-            m_snake->serialize( "./fittest_snake.net" );
-            
+            delete m_mama_snake;
+            m_mama_snake = new Snake();
+            m_mama_snake->deserialize( "/tmp/snake1.net" );
+            Snake *mate = new Snake();
+            mate->deserialize( "/tmp/snake2.net" );
+
+            m_mama_snake->procreate( mate );
+
+            delete mate;
+
             m_iterations = 0;
             m_generations++;
         }

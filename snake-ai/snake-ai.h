@@ -84,12 +84,26 @@ class Snake
     net_type net;
     net_type m_fnet;
     dnn_trainer<net_type> trainer;
+    char m_sx[10000] = {0};
+    char m_sy[10000] = {0};
+    float m_fx[10000] = {0};
+    float m_fy[10000] = {0};
+    int m_isx = 0;
+    int m_isy = 0;
     
 	//thread  thx; //( void(*), Cool* );
 public:
-	Snake(  );
-	void init( int wx, int wy, const char* snake_net_file );
-	void movesnake( int x, int y, int fx, int fy );
+    Snake(  );
+    void init( int wx, int wy, const char* snake_net_file );
+    void movesnake( int x, int y, int fx, int fy );
+
+    void combine( float*, float*, float* );
+    void mutate( float* );
+    void procreate( Snake* m );
+    Snake* give_birth();
+    int read_snake( const char* snake_file, char* membuf );
+    void write_snake( const char* snake_file, const char* membuf, int len );
+    int gather_dna( float* dna, char* membuf );
 
     std::deque< part >  m_snake;
     
@@ -104,12 +118,17 @@ public:
     {
         return m_moves_left;
     }
-    
+   
+    net_type& get_net()
+    {
+        return net;
+    }
+ 
     void serialize( const char* fn )
     {
         try{
             net_type fnet( net );
-            //fnet.clean();
+            fnet.clean();
             dlib::serialize( fn ) << fnet;
         } catch(...) {}
     }
@@ -122,7 +141,9 @@ public:
             net = fnet;
         } catch(...) {}
     }
-    
+   
+    Snake* procreate( Snake& m );
+ 
     double score()
     {
         return 1000 * m_snake.size() + m_moves;

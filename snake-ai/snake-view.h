@@ -1,19 +1,12 @@
 
 #pragma once
 
-//#include <FL/Fl.H>
-//#include <FL/Fl_Double_Window.H>
-//#include <FL/Fl_Window.H>
-//#include <FL/Fl_Timer.H>
-//#include <FL/forms.H>
-//#include <FL/fl_draw.H>
 #include <math.h>
 #include <vector>
 #include <deque>
 #include <dlib/timer.h>
 #include <dlib/matrix.h>
 #include <dlib/dnn.h>
-//#include <dlib/dnn/tensor_tools.h>
 #include <thread>
 #include <chrono>
 #include <sstream>
@@ -32,6 +25,7 @@ class SnakeView
    
     rectangle area;
     int m_hiscore;
+    int m_hiscorer_count;
     int m_iterations;
     int m_generations;
     part m_food;
@@ -39,6 +33,8 @@ class SnakeView
     unsigned char red, green,blue;
     bool m_warp;
     //thread  thx; //( void(*), Cool* );
+    Snake* m_mama_snake;
+
 public:
 
     SnakeView( );

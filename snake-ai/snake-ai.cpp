@@ -3,8 +3,8 @@
 //class Snake : public Fl_Double_Window
 
 #include <iostream>
+#include <string>
 #include "snake-ai.h"
-#include "snake-ai-gui.h"
 
 //std::vector< la::la_vector<double> > vecs;
 
@@ -28,11 +28,13 @@ Snake::Snake( )
     
     
     tt::tensor_rand trand;
-    
+  
+
+
+
     //trand.fill_gaussian( layer<2>(net) );
     //trand.fill_gaussian( layer<4>(net) );
 
-    
     
     
     if(false) {
@@ -64,20 +66,6 @@ Snake::Snake( )
 
 }
 
-#if 0
-Snake* Snake::procreate( Snake* mate )
-{
-    
-    net_type net;
-    
-    
-    Snake* baby = new Snake();
-    
-    
-    
-    
-}
-#endif
 
 void Snake::init( int wx, int wy, const char* snake_net_file )
 {
@@ -91,22 +79,133 @@ void Snake::init( int wx, int wy, const char* snake_net_file )
     m_snake.push_back( part(2+std::rand()%wx, 2+std::rand()%wy) );
     m_snake.push_back( part( m_snake.front().x+1, m_snake.front().y ) );
 
-    
+   
+    if( snake_net_file != NULL ) 
     try
     {
         dlib::deserialize( snake_net_file ) >> m_fnet;    
+	
+	//dlib::net_to_xml( m_fnet, "net.xml" );
+
         net = m_fnet;
     } catch(...){};
     
     
     trainer.set_learning_rate(0.01);
-    trainer.set_min_learning_rate(0.001);
+    trainer.set_min_learning_rate(0.0001);
     trainer.set_mini_batch_size(100);
-    trainer.set_max_num_epochs( 200 );
-    trainer.be_verbose();
+    trainer.set_max_num_epochs( 8000 );
+    //trainer.be_verbose();
     
     cerr << net << endl;
     
+}
+
+
+void Snake::procreate( Snake* m )
+{
+
+    
+    serialize( "/tmp/snake.male.net" );
+    m->serialize( "/tmp/snake.female.net" );
+
+    m_isx = read_snake( "/tmp/snake.male.net", m_sx );
+    m_isy = read_snake( "/tmp/snake.female.net", m_sy );
+
+
+    gather_dna( m_fx, m_sx );
+    gather_dna( m_fy, m_sy );
+    
+}
+
+Snake* Snake::give_birth()
+{
+
+    gather_dna( m_fx, m_sx );
+    gather_dna( m_fy, m_sy );
+
+    float dna[10000];
+    char embreo[10000];
+
+    memcpy( (void*)embreo, (void*)m_sx, 10000 );
+
+    combine( m_fx, m_fy, dna );
+    //mutate( dna );
+
+    write_snake( "/tmp/newsnake.net", m_sx, m_isx );
+
+    Snake* baby = new Snake();
+
+    baby->deserialize( "/tmp/newsnake.net" );
+
+    return baby;
+    
+}
+
+
+void Snake::combine( float* x, float* y, float* z )
+{
+
+    ::srand( time( NULL ) );
+
+    for( int i=0; i < 10000; i++ )
+    {
+        z[i] = x[i];
+    }
+
+    for( int i=0; i < 10000; i++ )
+    {
+        if( ( ::rand() % 2 ) == 0 )
+		z[i] = x[i];
+
+    }
+}
+
+
+int Snake::read_snake( const char* snake_file, char* membuf )
+{
+    int x=0;
+
+    FILE* fp = fopen( snake_file, "r+" );
+
+    for( int i=0; feof( fp ) == 0; i++ ) 
+	x += ::fread( &membuf[i], 1, 1, fp );
+
+    fclose( fp );
+    return x;
+}
+
+
+void Snake::write_snake( const char* snake_file, const char* membuf, int len )
+{
+
+   FILE* fp = fopen( snake_file, "w+" );
+
+   for( int i=0; i < len; i++ )
+      ::fwrite( membuf, 1, 1, fp );
+
+   fclose( fp );
+}
+
+
+int Snake::gather_dna( float* dna, char* membuf )
+{
+
+    int x=0;
+
+    for( int j=0; j < 24; j++ )
+       for( int i=0; i < 18; i++ )
+          dna[x++] = ((float*)(&membuf[0x49]))[18*j+i];
+
+    for( int j=0; j < 18; j++ )
+       for( int i=0; i < 18; i++ )
+          dna[x++] = ((float*)(&membuf[0x8fc]))[18*j+i];
+
+    for( int j=0; j < 4; j++ )
+       for( int i=0; i < 18; i++ )
+          dna[x++] = ((float*)(&membuf[0xffd]))[18*j+i];
+
+    return x;
 }
 
 
@@ -201,10 +300,10 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
             
         }
         
-        cout << dw << " : " << db << " : " << df << endl; 
+        //cout << dw << " : " << db << " : " << df << endl; 
         
 
-        cout << "look() error" << endl;
+        //cout << "look() error" << endl;
 
         return make_pair( -1, 0.0 );
     };
@@ -280,7 +379,7 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
     m_last_good_moves.push_back( direction );
     
     std::vector< long unsigned int > vecOuts = { direction };
-    
+ 
     if( (::rand() % 5) == 0 )
     {
         m_last_good_moves.push_back( ::rand()%4 );
@@ -295,9 +394,12 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
                         rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999)
             } );
     }
-    
+
+/*    
     if( m_moves >= 20 && m_snake.size() >= 4 )
         trainer.train( m_last_good_observations, m_last_good_moves );
+
+*/
     
     //trainer.train_one_step( vecMats );
     
@@ -346,6 +448,9 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
         
         ;// dont drop backpart
 
+        
+        trainer.train( m_last_good_observations, m_last_good_moves );
+
     }
     else
         m_snake.pop_back();
@@ -359,7 +464,15 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
 
     //cerr << layer<4>(net).layer_details() << endl;
     
-    //cerr << layer<4>(net).to_tensor().size() << endl;
+    //cerr << layer<6>(net).get_output().host()[1] << endl;
+    //cerr << layer<6>(net).get_output().host()[1] << endl;
+
+    //resizable_tensor t;
+
+    //auto l = layer<6>(net);
+    //resizable_tensor o = l.get_gradient_input();
+    //l.to_tensor( l.begin(), l.end(), t  );
+    //cerr <<  o.size()   << endl;
     
     
     
