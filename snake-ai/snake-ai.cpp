@@ -16,7 +16,8 @@ Snake::Snake( )
     , m_dead(false)
     , m_print(false)
     , m_got_food(false)
-    , net(prelu_(rnd.get_double_in_range(.001,.999)), prelu_(rnd.get_double_in_range(.001,.999)))
+    //, net(prelu_(rnd.get_double_in_range(.001,.999)), prelu_(rnd.get_double_in_range(.001,.999)))
+    //, net(relu_(rnd.get_double_in_range(.001,.999)), relu_(rnd.get_double_in_range(.001,.999)))
     , trainer( net )
 {
 
@@ -43,6 +44,7 @@ void Snake::init( int wx, int wy, const char* snake_net_file )
     {
         dlib::deserialize( snake_net_file ) >> m_fnet;    
         net = m_fnet;
+
     } catch(...){};
     
 }
@@ -76,9 +78,11 @@ Snake* Snake::give_birth()
     memcpy( (void*)embreo, (void*)m_sx, 10000 );
 
     combine( m_fx, m_fy, dna );
-    //mutate( dna );
+    mutate( dna, 10 );
+    place_dna( dna, embreo );
+    
 
-    write_snake( "/tmp/newsnake.net", m_sx, m_isx );
+    write_snake( "/tmp/newsnake.net", embreo, m_isx );
 
     Snake* baby = new Snake();
 
@@ -92,7 +96,7 @@ Snake* Snake::give_birth()
 void Snake::combine( float* x, float* y, float* z )
 {
 
-    ::srand( time( NULL ) );
+    //::srand( time( NULL ) );
 
     for( int i=0; i < 10000; i++ )
     {
@@ -103,15 +107,18 @@ void Snake::combine( float* x, float* y, float* z )
     {
         if( ( ::rand() % 2 ) == 0 )
 		z[i] = y[i];
-
     }
+
+}
+
+void Snake::mutate( float* dna, int percent )
+{
 
     for( int i=0; i < 10000; i++ )
     {
-        if( (::rand() % 20 ) == 0 )
-            z[i] = rnd.get_double_in_range( .0, .9999 );
+        if( (::rand() % (100 / percent) ) == 0 )
+            dna[i] = rnd.get_double_in_range( .0, .9999 );
     }
-
 
 }
 
@@ -149,19 +156,44 @@ int Snake::gather_dna( float* dna, char* membuf )
 
     for( int j=0; j < 24; j++ )
        for( int i=0; i < 18; i++ )
-          dna[x++] = ((float*)(&membuf[0x49]))[18*j+i];
+          //dna[x++] = ((float*)(&membuf[0x49]))[18*j+i];
+          dna[x++] = ((float*)(&membuf[0x45]))[18*j+i];
 
     for( int j=0; j < 18; j++ )
        for( int i=0; i < 18; i++ )
-          dna[x++] = ((float*)(&membuf[0x8fc]))[18*j+i];
+          //dna[x++] = ((float*)(&membuf[0x8fc]))[18*j+i];
+          dna[x++] = ((float*)(&membuf[0x7d2]))[18*j+i];
 
     for( int j=0; j < 4; j++ )
        for( int i=0; i < 18; i++ )
-          dna[x++] = ((float*)(&membuf[0xffd]))[18*j+i];
+          //dna[x++] = ((float*)(&membuf[0xffd]))[18*j+i];
+          dna[x++] = ((float*)(&membuf[0xdad]))[18*j+i];
 
     return x;
 }
 
+
+int Snake::place_dna( float* dna, char* membuf )
+{
+    int x=0;
+    
+    for( int j=0; j < 24; j++ )
+       for( int i=0; i < 18; i++ )
+          //dna[x++] = ((float*)(&membuf[0x49]))[18*j+i];
+          ((float*)(&membuf[0x45]))[18*j+i] = dna[x++];
+
+    for( int j=0; j < 18; j++ )
+       for( int i=0; i < 18; i++ )
+          //dna[x++] = ((float*)(&membuf[0x8fc]))[18*j+i];
+          ((float*)(&membuf[0x7d2]))[18*j+i] = dna[x++];
+
+    for( int j=0; j < 4; j++ )
+       for( int i=0; i < 18; i++ )
+          //dna[x++] = ((float*)(&membuf[0xffd]))[18*j+i];
+          ((float*)(&membuf[0xdad]))[18*j+i] = dna[x++];
+
+    return x;
+}
 
 void Snake::movesnake( int wx, int wy, int fx, int fy )
 {
@@ -177,7 +209,6 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
     
     part p = m_snake.front();
 
-#if 1
     
     auto hit_wall = [&] (const part& h) -> bool {
 
@@ -253,113 +284,35 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
             }
             
         }
-        
-        //cout << dw << " : " << db << " : " << df << endl; 
-        
 
-        cout << "look() error" << endl;
+        //cerr << "look() error" << endl;
 
         return make_pair( -1, 0.0 );
     };
 
 
-    //up
-    auto saw = look( 0, -1 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,0) = ( saw.first == 1 ? 1.0 : 0.0 ); // body
-    m_imat(1,0) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,0) = 1.0 / saw.second; // distance
+    int views[][2] = {
+	{ 0, -1 }, // up
+	{ 0,  1 }, // down
+	{-1,  0 }, // left
+	{ 1,  0 }, // right 
+	{-1, -1 }, // up / left
+	{ 1, -1 }, // up / right
+	{-1,  1 }, // down / left
+	{ 1,  1 }  // down / right
+    };
 
-    //down
-    saw = look( 0, 1 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,1) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,1) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,1) = 1.0 / saw.second; // distance
-
-    //left
-    saw = look( -1, 0 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,2) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,2) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,2) = 1.0 / saw.second; // distance
-
-    //right
-    saw = look( 1, 0 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,3) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,3) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,3) = 1.0 / saw.second; // distance
-
-    //up / left
-    saw = look( -1, -1 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,4) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,4) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,4) = 1.0 / saw.second; // distance
-
-    //up / right
-    saw = look( 1, -1 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,5) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,5) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,5) = 1.0 / saw.second; // distance
-
-    //down / left
-    saw = look( -1, 1 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,6) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,6) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,6) = 1.0 / saw.second; // distance
-
-    //down / right
-    saw = look( 1, 1 );
-//    cout << saw.first << " - " << saw.second << endl;
-    m_imat(0,7) = ( saw.first == 1 ? 1.0 : 0.0 ); // wall
-    m_imat(1,7) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
-    m_imat(2,7) = 1.0 / saw.second; // distance
-
-    //cout << *net << endl;
-    //cout << layer<2>(net).get_output() << endl;
-    //layer<4>(net).get_output();
+    for( int d=0; d < 8; d++ )
+    {
+        auto saw = look( views[d][0], views[d][1] );
+        m_imat(0,d) = ( saw.first == 1 ? 1.0 : 0.0 ); // body
+        m_imat(1,d) = ( saw.first == 2 ? 1.0 : 0.0 ); // food
+        m_imat(2,d) = 1.0 / saw.second; // distance
+    }
     
     std::vector< input_matrix_type > vecMats = { m_imat };
-    
-    //cout << (*net)( vecMats ).size() << endl;
-    
     direction = net( vecMats )[0];
    
-#if 0 
-    m_last_good_observations.push_back( m_imat ); 
-    m_last_good_moves.push_back( direction );
-    
-    std::vector< long unsigned int > vecOuts = { direction };
- 
-    if( (::rand() % 20) == 0 )
-    {
-        m_last_good_moves.push_back( ::rand()%4 );
-        m_last_good_observations.push_back( { 
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999),   
-                        rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999), rnd.get_double_in_range(0.0, 0.999)
-            } );
-    }
-
-/*    
-    if( m_moves >= 20 && m_snake.size() >= 4 )
-        trainer.train( m_last_good_observations, m_last_good_moves );
-
-*/
-    
-    //trainer.train_one_step( vecMats );
-#endif
-    
-#endif
     
     auto back_part( m_snake.back() );
 
@@ -384,52 +337,21 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
     
     
     //if( hit_wall( p )  )
-    if( hit_wall( p ) || hit_body( p ) )
+    if( hit_wall( p ) || hit_body( p ) || m_moves_left <= 0)
     {
-        char net_file_name[1000];
-        
-        int s = score();
-        
-        //sprintf( net_file_name, "./nets/%08d", (int)score() );
-        
         m_dead = true;
-        
         return;
     }
     else if( p.x == fx && p.y == fy )
     {
         m_got_food = true;
-
         m_moves_left += 100;
-        
-        ;// dont drop backpart
-
-        //trainer.train( m_last_good_observations, m_last_good_moves );
     }
     else
         m_snake.pop_back();
     
     m_snake.push_front( p );
  
-    
-    //cout << m_hiscore << " / " << m_generations << " / " << m_iterations << " / " << m_snake.size() << " / " << m_moves++ << " / " << m_moves_left-- << endl;
-    
-
-
-    //cerr << layer<4>(net).layer_details() << endl;
-    
-    //cerr << layer<6>(net).get_output().host()[1] << endl;
-    //cerr << layer<6>(net).get_output().host()[1] << endl;
-
-    //resizable_tensor t;
-
-    //auto l = layer<6>(net);
-    //resizable_tensor o = l.get_gradient_input();
-    //l.to_tensor( l.begin(), l.end(), t  );
-    //cerr <<  o.size()   << endl;
-    
-    
-    
 }
 
 

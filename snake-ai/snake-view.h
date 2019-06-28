@@ -34,6 +34,7 @@ class SnakeView
     bool m_warp;
     //thread  thx; //( void(*), Cool* );
     Snake* m_mama_snake;
+    std::deque<Snake*> m_sq;
 
 public:
 

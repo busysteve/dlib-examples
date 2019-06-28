@@ -94,7 +94,7 @@ int main()
     while( true )
     {
         int ch = getch();
-        mvprintw( 42, 20, "%c : %d", ch, ch );
+        //mvprintw( 42, 20, "%c : %d", ch, ch );
         
         if( ch == 65 )
         {
@@ -102,7 +102,7 @@ int main()
             if( --delay < 0 )
                 delay = 0;
             my_window.delay_ms( delay );
-            mvprintw( 42, 10, "Delay = %d", delay );
+            //mvprintw( 42, 10, "Delay = %d", delay );
             refresh();
         }    
         else if( ch == 66 )
@@ -111,12 +111,12 @@ int main()
             if( ++delay > 100 )
                 delay = 100;
             my_window.delay_ms( delay );
-            mvprintw( 41, 10, "Delay = %d", delay );
+            //mvprintw( 41, 10, "Delay = %d", delay );
             refresh();
         }
         else if( ch == 'w' )
         {
-            my_window.delay_ms( 0 );
+            my_window.delay_ms( 1 );
             my_window.sv().warp( true );
         }
         else if( ch == 81 || ch == 113 )
@@ -128,8 +128,8 @@ int main()
 
         //::refresh();
 
-        if( delay < 0 )
-            delay = 0;
+        if( delay < 10 )
+            delay = 10;
         else if( delay > 100 )
             delay = 100;
         

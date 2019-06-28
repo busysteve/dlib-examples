@@ -1,4 +1,5 @@
 
+
 #pragma once
 
 #include <math.h>
@@ -35,13 +36,30 @@ using net_type = loss_multiclass_log<
 
 using input_matrix_type = matrix<double, 3, 8>;
 
+#if 0
 using net_type = loss_multiclass_log<
                                 fc<4,        
-                                dropout< prelu<fc<18,   
-                                dropout< prelu<fc<18,  
+                                relu<fc<18,   
+                                relu<fc<18,  
+                                input<  input_matrix_type
+                                >>>>>>>;
+
+
+#elif 0
+using net_type = loss_multiclass_log<
+                                fc<4,        
+                                tag1<relu<fc<18,   
+                                tag2<relu<fc<18,  
                                 input<  input_matrix_type
                                 >>>>>>>>>;
-                                
+#else
+using net_type = loss_multiclass_log<
+                                tag1<fc<4,relu<
+                                tag2<fc<18,relu<
+                                tag3<relu<fc<18,
+                                input<  input_matrix_type
+                                >>>>>>>>>>>;
+#endif                                
                                 
 class part
 {
@@ -62,9 +80,9 @@ class Snake
 
     dlib::rand rnd;
     int m_mx;
-	int m_my;
-	int m_moves_left;
-	int m_moves;
+    int m_my;
+    int m_moves_left;
+    int m_moves;
     part m_oldpart;
     bool m_dead;
     bool m_print;
@@ -98,12 +116,13 @@ public:
     void movesnake( int x, int y, int fx, int fy );
 
     void combine( float*, float*, float* );
-    void mutate( float* );
+    void mutate( float*, int );
     void procreate( Snake* m );
     Snake* give_birth();
     int read_snake( const char* snake_file, char* membuf );
     void write_snake( const char* snake_file, const char* membuf, int len );
     int gather_dna( float* dna, char* membuf );
+    int place_dna( float* dna, char* membuf );
 
     std::deque< part >  m_snake;
     
@@ -147,7 +166,10 @@ public:
     double score()
     {
         //return 1000 * m_snake.size() + m_moves*m_moves;
-        return m_moves*m_moves*m_snake.size();
+
+        int scor = m_snake.size()-1;
+
+        return m_moves*m_moves*pow(2, scor )*m_moves_left;
     }
 
     bool dead() { return m_dead; }
