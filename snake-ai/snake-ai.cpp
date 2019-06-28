@@ -50,43 +50,20 @@ void Snake::init( int wx, int wy, const char* snake_net_file )
 }
 
 
-void Snake::procreate( Snake* m )
+Snake* Snake::procreate( Snake* m )
 {
 
-    
-    serialize( "/tmp/snake.male.net" );
-    m->serialize( "/tmp/snake.female.net" );
-
-    m_isx = read_snake( "/tmp/snake.male.net", m_sx );
-    m_isy = read_snake( "/tmp/snake.female.net", m_sy );
-
-
-    gather_dna( m_fx, m_sx );
-    gather_dna( m_fy, m_sy );
-    
-}
-
-Snake* Snake::give_birth()
-{
-
-    gather_dna( m_fx, m_sx );
-    gather_dna( m_fy, m_sy );
+    gather_dna( m_fx, m );
+    gather_dna( m_fy, this );
 
     float dna[10000];
-    char embreo[10000];
-
-    memcpy( (void*)embreo, (void*)m_sx, 10000 );
 
     combine( m_fx, m_fy, dna );
-    mutate( dna, 10 );
-    place_dna( dna, embreo );
-    
-
-    write_snake( "/tmp/newsnake.net", embreo, m_isx );
+    mutate( dna, 5 );
 
     Snake* baby = new Snake();
+    place_dna( dna, baby );
 
-    baby->deserialize( "/tmp/newsnake.net" );
 
     return baby;
     
@@ -149,51 +126,58 @@ void Snake::write_snake( const char* snake_file, const char* membuf, int len )
 }
 
 
-int Snake::gather_dna( float* dna, char* membuf )
+int Snake::gather_dna( float* dna, Snake* s )
 {
 
     int x=0;
 
-    for( int j=0; j < 24; j++ )
-       for( int i=0; i < 18; i++ )
-          //dna[x++] = ((float*)(&membuf[0x49]))[18*j+i];
-          dna[x++] = ((float*)(&membuf[0x45]))[18*j+i];
+    auto w1 = layer< tag1 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s1 = w1.size();
+    for( int i=0; i < s1; i++ )
+       dna[x++] = w1.host()[i];
 
-    for( int j=0; j < 18; j++ )
-       for( int i=0; i < 18; i++ )
-          //dna[x++] = ((float*)(&membuf[0x8fc]))[18*j+i];
-          dna[x++] = ((float*)(&membuf[0x7d2]))[18*j+i];
+    auto w2 = layer< tag2 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s2 = w2.size();
+    for( int i=0; i < s2; i++ )
+       dna[x++] = w2.host()[i];
 
-    for( int j=0; j < 4; j++ )
-       for( int i=0; i < 18; i++ )
-          //dna[x++] = ((float*)(&membuf[0xffd]))[18*j+i];
-          dna[x++] = ((float*)(&membuf[0xdad]))[18*j+i];
+    auto w3 = layer< tag3 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s3 = w3.size();
+    for( int i=0; i < s3; i++ )
+       dna[x++] = w3.host()[i];
+
 
     return x;
 }
 
 
-int Snake::place_dna( float* dna, char* membuf )
+int Snake::place_dna( float* dna, Snake* s )
 {
+
     int x=0;
-    
-    for( int j=0; j < 24; j++ )
-       for( int i=0; i < 18; i++ )
-          //dna[x++] = ((float*)(&membuf[0x49]))[18*j+i];
-          ((float*)(&membuf[0x45]))[18*j+i] = dna[x++];
 
-    for( int j=0; j < 18; j++ )
-       for( int i=0; i < 18; i++ )
-          //dna[x++] = ((float*)(&membuf[0x8fc]))[18*j+i];
-          ((float*)(&membuf[0x7d2]))[18*j+i] = dna[x++];
+    auto w1 = layer< tag1 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s1 = w1.size();
+    for( int i=0; i < s1; i++ )
+       w1.host()[i] = dna[x++];
 
-    for( int j=0; j < 4; j++ )
-       for( int i=0; i < 18; i++ )
-          //dna[x++] = ((float*)(&membuf[0xffd]))[18*j+i];
-          ((float*)(&membuf[0xdad]))[18*j+i] = dna[x++];
+    auto w2 = layer< tag2 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s2 = w2.size();
+    for( int i=0; i < s2; i++ )
+       w2.host()[i] = dna[x++];
+
+    auto w3 = layer< tag3 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s3 = w3.size();
+    for( int i=0; i < s3; i++ )
+       w3.host()[i] = dna[x++];
+
 
     return x;
 }
+
+
+
+
 
 void Snake::movesnake( int wx, int wy, int fx, int fy )
 {

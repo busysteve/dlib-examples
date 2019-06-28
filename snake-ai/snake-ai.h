@@ -56,9 +56,9 @@ using net_type = loss_multiclass_log<
 using net_type = loss_multiclass_log<
                                 tag1<fc<4,relu<
                                 tag2<fc<18,relu<
-                                tag3<relu<fc<18,
+                                tag3<fc<18,
                                 input<  input_matrix_type
-                                >>>>>>>>>>>;
+                                >>>>>>>>>>;
 #endif                                
                                 
 class part
@@ -117,12 +117,11 @@ public:
 
     void combine( float*, float*, float* );
     void mutate( float*, int );
-    void procreate( Snake* m );
-    Snake* give_birth();
+    Snake* procreate( Snake* m );
     int read_snake( const char* snake_file, char* membuf );
     void write_snake( const char* snake_file, const char* membuf, int len );
-    int gather_dna( float* dna, char* membuf );
-    int place_dna( float* dna, char* membuf );
+    int gather_dna( float* dna, Snake* s );
+    int place_dna( float* dna, Snake* s );
 
     std::deque< part >  m_snake;
     

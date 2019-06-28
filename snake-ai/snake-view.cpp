@@ -55,9 +55,7 @@ void SnakeView::restart()
            ;
        Snake *female = *it;
 
-       female->procreate( male );
-
-       m_snake = female->give_birth();
+       m_snake = female->procreate( male );
 
           
     }
@@ -90,7 +88,7 @@ void SnakeView::movesnake( )
         {
             m_sq.push_front( m_snake );		
 
-            if( m_sq.size() > 30 )
+            if( m_sq.size() > 100 )
                 m_sq.pop_back();
 
             m_hiscore = s;
@@ -147,57 +145,6 @@ void SnakeView::movesnake( )
             m_snake->moves(),
             m_snake->moves_left() );
 
-#if 0 
-    ::mvprintw( 41, 14, "  %d|%d:%d-%d       "
-            ,layer< tag1 >( m_snake->get_net() ).get_output().k()
-            ,layer< tag1 >( m_snake->get_net() ).get_output().nc()
-            ,layer< tag1 >( m_snake->get_net() ).get_output().nr()
-            ,layer< tag1 >( m_snake->get_net() ).get_output().size()
-     );
-
-    ::mvprintw( 42, 14, "  %d|%d:%d-%d       "
-            ,layer< tag2 >( m_snake->get_net() ).get_output().k()
-            ,layer< tag2 >( m_snake->get_net() ).get_output().nc()
-            ,layer< tag2 >( m_snake->get_net() ).get_output().nr()
-            ,layer< tag2 >( m_snake->get_net() ).get_output().size()
-     );
-
-    ::mvprintw( 43, 14, "  %d|%d:%d-%d ( %0.6f )    %d     "
-            ,layer< tag3 >( m_snake->get_net() ).get_output().k()
-            ,layer< tag3 >( m_snake->get_net() ).get_output().nc()
-            ,layer< tag3 >( m_snake->get_net() ).get_output().nr()
-            ,layer< tag3 >( m_snake->get_net() ).get_output().size()
-            ,layer< tag3 >( m_snake->get_net() ).get_output().host()[0]
-            ,layer< tag3 >( m_snake->get_net() ).subnet().get_output().size()
-     );
-
-
-    ::mvprintw( 44, 14, "  %d  %d  %d  %d  %d  %d         "
-            ,layer< tag1 >( m_snake->get_net() ).get_output().size()
-            ,layer< tag2 >( m_snake->get_net() ).get_output().size()
-            ,layer< tag3 >( m_snake->get_net() ).get_output().size()
-            ,layer< tag1 >( m_snake->get_net() ).subnet().get_output().size()
-            ,layer< tag2 >( m_snake->get_net() ).subnet().get_output().size()
-            ,layer< tag3 >( m_snake->get_net() ).subnet().get_output().size()
-     );
-
-    ::mvprintw( 44, 14, "  %d   %0.6f   %0.6f        "
-            ,layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().size()
-            ,layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().host()[0]
-            ,layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().host()[0]
-     );
-
-
-     layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().host()[0] = .4;
-
-
-    ::mvprintw( 45, 14, "  %d   %0.6f   %0.6f        "
-            ,layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().size()
-            ,layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().host()[0]
-            ,layer< tag1 >( m_snake->get_net() ).subnet().layer_details().get_weights().host()[0]
-     );
-
-#endif
 
     //this->redraw();
 
