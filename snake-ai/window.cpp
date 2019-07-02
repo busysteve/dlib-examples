@@ -18,6 +18,7 @@
 
 
 #include "snake-view.h"
+#include "snake-pop.h"
 
 
 using namespace std;
@@ -27,97 +28,80 @@ using namespace dlib;
 
 //  ----------------------------------------------------------------------------
 
-class swin 
+int main( int argc, char** argv )
 {
-    /*
-        Here I am going to define our window.  In general, you can define as 
-        many window types as you like and make as many instances of them as you want.
-        In this example I am only making one though.
-    */
-public:
-    swin(
-    ) : // All widgets take their parent window as an argument to their constructor.
-        snake(), // the color_box will be blue and 101 pixels wide and tall
-        t( snake, &SnakeView::movesnake )
+
+    if( argc != 3 )
     {
-
-        //timer<SnakeView> t( snake, &SnakeView::movesnake );
-
-        t.set_delay_time( 10 );
-        //t.start();
-
-    } 
-
-    void start()
-    {
-        t.start();
+        printf("%s [population] [threads]\n ", argv[0] );
+        exit(0);
     }
 
-    void delay_ms( int v )
-    {
-        t.set_delay_time( v );
-    }
-
-    SnakeView& sv() { return snake; }
-
-    ~swin(
-    )
-    {
-        // You should always call close_window() in the destructor of window
-        // objects to ensure that no events will be sent to this window while 
-        // it is being destructed.  
-    }
-
-private:
-
-    SnakeView snake;
-    timer<SnakeView> t;
-};
-
-//  ----------------------------------------------------------------------------
-
-int main()
-{
-    // create our window
-    swin my_window;
 
     int delay = 100;
            
-    my_window.delay_ms( delay );
+    ::initscr();
+    ::cbreak();
+    ::noecho();
+    ::curs_set(0);
+    ::clear();
 
-    my_window.start();
+ 
+    int population = atoi( argv[1] );
+    int threads = atoi( argv[2] );
 
-    // wait until the user closes this window before we let the program 
-    // terminate.
+
+    Population pop( population, threads );
+
+    pop.initializeSnakes( 38, 42, 38, 42 );
+
+    pop.update();
+    pop.show();
+
+
+    int highscore = 0;   
 
 
     while( true )
     {
-        int ch = getch();
+        if( pop.done() )
+        {
+            highscore = pop.bestSnake->score();
+            pop.calculateFitness();
+            pop.naturalSelection();
+            pop.show();
+        }
+        else
+        {
+            //pop.update();
+            pop.handle_snakes();
+            //pop.show();
+        }
+        int ch = 0; // getch();
         //mvprintw( 42, 20, "%c : %d", ch, ch );
         
         if( ch == 65 )
         {
-            my_window.sv().warp( false );
+            //my_window.sv().warp( false );
             if( --delay < 0 )
                 delay = 0;
-            my_window.delay_ms( delay );
+            //my_window.delay_ms( delay );
             //mvprintw( 42, 10, "Delay = %d", delay );
             refresh();
         }    
         else if( ch == 66 )
         {
-            my_window.sv().warp( false );
+            //my_window.sv().warp( false );
             if( ++delay > 100 )
                 delay = 100;
-            my_window.delay_ms( delay );
+            //my_window.delay_ms( delay );
             //mvprintw( 41, 10, "Delay = %d", delay );
             refresh();
         }
         else if( ch == 'w' )
         {
-            my_window.delay_ms( 1 );
-            my_window.sv().warp( true );
+            //my_window.delay_ms( 1 );
+            //my_window.sv().warp( true );
         }
         else if( ch == 81 || ch == 113 )
         {
@@ -135,11 +119,14 @@ int main()
         
 
 
-        dlib::sleep( 20 );
+        //dlib::sleep( 20 );
     }
         ::sleep(10000);
 
 
+
+    ::refresh();
+    ::endwin();
 
     return 0;
 }

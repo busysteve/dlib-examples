@@ -35,11 +35,13 @@ class SnakeView
     //thread  thx; //( void(*), Cool* );
     Snake* m_mama_snake;
     std::deque<Snake*> m_sq;
+    int m_x=0;
+
 
 public:
 
-    SnakeView( );
-	
+    SnakeView();
+    int score() { return m_x; };	
     void movesnake();
     void restart();
     void draw( int x, int y );

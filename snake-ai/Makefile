@@ -1,7 +1,7 @@
 
 CC = g++
-CFLAGS = -g -std=c++11 
-OBJS =  window.o snake-ai.o snake-view.o source.o
+CFLAGS = -g -std=c++11 -pthread
+OBJS =  window.o snake-ai.o snake-view.o snake-pop.o source.o
 INCLUDES = -I/home/smathews/dlib/
 LDFLAGS =  -lcurses -lpthread -ldl -lpng -ljpeg -lblas -llapack -lX11 -lXrender -lXext -lXfixes -lfltk  -ldlib    -L/home/smathews/dlib/examples/build/dlib_build/
 
@@ -13,6 +13,9 @@ window.o: window.cpp snake-ai.h snake-view.h
 
 snake-ai.o: snake-ai.cpp snake-ai.h
 	${CC} ${CFLAGS} ${INCLUDES} -o snake-ai.o -c snake-ai.cpp
+
+snake-pop.o: snake-pop.cpp snake-pop.h
+	${CC} ${CFLAGS} ${INCLUDES} -o snake-pop.o -c snake-pop.cpp
 
 snake-view.o: snake-ai.h snake-view.cpp snake-view.h
 	${CC} ${CFLAGS} ${INCLUDES} -o snake-view.o -c snake-view.cpp
@@ -29,13 +32,13 @@ test.o: test.cpp snake-ai.h
 	${CC} ${CFLAGS} ${INCLUDES} -o test.o -c test.cpp
 
 clean:
-	rm window.o snake-ai.o snake-view.o snake-ai
+	rm window.o snake-ai.o snake-view.o snake-pop.o snake-ai
 	
 clearnets:
 	rm /tmp/newsnake.net  /tmp/snake.female.net  /tmp/snake.male.net
 	
 cleanall:
-	rm source.o window.o snake-ai.o snake-view.o snake-ai
+	rm source.o window.o snake-ai.o snake-view.o snake-pop.o snake-ai
 	
 all:
 	make clean; make

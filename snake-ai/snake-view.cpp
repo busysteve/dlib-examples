@@ -8,7 +8,7 @@
 
 //std::vector< la::la_vector<double> > vecs;
 
-SnakeView::SnakeView( )
+SnakeView::SnakeView(  )
     : m_hiscore(0)
     , m_hiscorer_count(0)
     , m_iterations(0)
@@ -40,58 +40,87 @@ void SnakeView::restart()
     }
 
 
-    if( m_sq.size() >= 3 )
+    if( m_generations > 0 && m_sq.size() >= 3 )
     {
        int mate1 = (::rand() % m_sq.size());
        int mate2 = (::rand() % m_sq.size()-1);
-       
-       auto it = m_sq.begin();
-       for( int i=0; i < mate1 && it != m_sq.end(); i++,it++ )
-           ;
-       Snake *male = *it;
+      
+       if( m_iterations == 0 )
+       {
+           m_snake = new Snake( m_sq.front() );
+       }
+       else
+       {
+           int r = ::rand() % 3;
+           
+           if( r == 0 )
+           {
+               m_snake = new Snake();
+           }
+           else if( r == 1 )
+           {
+               auto it = m_sq.begin(); 
+               for( int i=0; i < mate1 && it != m_sq.end(); i++,it++ )
+                   ; 
+               Snake *male = *it;
 
-       it = m_sq.begin();
-       for( int i=0; i < mate2 && it != m_sq.end(); i++,it++ )
-           ;
-       Snake *female = *it;
+               Snake *female = new Snake();
 
-       m_snake = female->procreate( male );
+               m_snake = female->procreate( male );
+               delete female;
+           }
+           else 
+           {
+               auto it = m_sq.begin();
+               for( int i=0; i < mate1 && it != m_sq.end(); i++,it++ )
+                   ;
+               Snake *male = *it;
 
-          
+               it = m_sq.begin();
+               for( int i=0; i < mate2 && it != m_sq.end(); i++,it++ )
+                   ;
+               Snake *female = *it;
+
+               m_snake = female->procreate( male );
+           }
+       }
     }
     else
         m_snake = new Snake(  );
 
-    m_snake->init( 2+std::rand()%32, 2+std::rand()%44, NULL );
+    m_snake->init( 36, 48, 2+std::rand()%32, 2+std::rand()%44 );
+    m_snake->set_food( m_food.x, m_food.y );
 }
 
 
 void SnakeView::movesnake( )
 {
-    int wx = 36;
-    int wy = 48;
     
-    m_snake->movesnake( wx, wy, m_food.x, m_food.y );
+    m_snake->move();
     
-    
+   
+
+ 
     //if( hit_wall( p )  )
     if( m_snake->dead() )
     {
         //draw();
         
 
-        int s = m_snake->score();
+        int f = m_snake->fitness();
+        int x = m_snake->score();
+        m_x = ( m_x < x ) ? x : m_x;
         
         //sprintf( net_file_name, "./nets/%08d", (int)score() );
         
-        if( m_hiscore <= s )
+        if( m_hiscore <= x )
         {
             m_sq.push_front( m_snake );		
 
-            if( m_sq.size() > 100 )
+            if( m_sq.size() > 30 )
                 m_sq.pop_back();
 
-            m_hiscore = s;
+            m_hiscore = x;
 
         }
 	else
@@ -134,10 +163,8 @@ void SnakeView::movesnake( )
         ::refresh();
     
    
-    //cout << m_hiscore << " / " << m_generations << " / " << m_iterations << " / " << m_snake->m_snake.size() << " / " << m_snake->moves() << " / " << m_snake->moves_left() << endl;
-    
-    
-    ::mvprintw( 40, 4, " %d / %d / %d / %d/ %d / %d         ",  
+    ::mvprintw( 40, 4, " %d / %d / %d / %d / %d/ %d / %d         ",  
+            m_x,
             m_hiscore,
             m_generations,
             m_iterations,
@@ -163,4 +190,8 @@ void SnakeView::draw( int x, int y )
         //::refresh();
     
 }
+
+
+
+
 

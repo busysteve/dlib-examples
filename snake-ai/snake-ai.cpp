@@ -20,46 +20,86 @@ Snake::Snake( )
     //, net(relu_(rnd.get_double_in_range(.001,.999)), relu_(rnd.get_double_in_range(.001,.999)))
     , trainer( net )
 {
+    //cout << " $ ";
+}
 
-    
-    
+Snake::Snake( Snake* s )
+	: rnd( ::time(NULL) )
+    , m_hiscore(0)
+    , m_iterations(0)
+    , m_generations(0)
+    , m_dead(false)
+    , m_print(false)
+    , m_got_food(false)
+    //, net(prelu_(rnd.get_double_in_range(.001,.999)), prelu_(rnd.get_double_in_range(.001,.999)))
+    //, net(relu_(rnd.get_double_in_range(.001,.999)), relu_(rnd.get_double_in_range(.001,.999)))
+    , trainer( net )
+{
+
+    net = s->net;
+    //cout << " n ";
 
 }
 
-
-void Snake::init( int wx, int wy, const char* snake_net_file )
+Snake::~Snake()
 {
+   // cout << " * ";
+}
+
+void Snake::init( int wx, int wy, int x, int y )
+{
+
+    m_wx = wx;
+    m_wy = wy;
+
+    if( x < 0 )
+        x = ::rand()%wx;
+
+    if( y < 0 )
+        y = ::rand()%wy;
+
     m_moves_left = 500;
     m_moves = 0;
     
     m_snake.clear();
-    
-    
-    m_snake.push_back( part(2+std::rand()%wx, 2+std::rand()%wy) );
-    m_snake.push_back( part( m_snake.front().x+1, m_snake.front().y ) );
 
-   
-    if( snake_net_file != NULL ) 
-    try
-    {
-        dlib::deserialize( snake_net_file ) >> m_fnet;    
-        net = m_fnet;
+    //cout << x << " : " << y << endl;    
+ 
+    m_snake.push_back( part(x,y) );
 
-    } catch(...){};
-    
+    if( x <= 1 ) x++;
+    else x--;
+
+    if( y <= 1 ) y++;
+    else y--;
+
+    m_snake.push_back( part(x,y) );
+
+
+    set_food( ::rand()%wx, ::rand()%wy );
+
 }
 
+
+Snake* Snake::clone()
+{
+
+    Snake* snake = new Snake( this );
+
+    return snake;
+
+}
 
 Snake* Snake::procreate( Snake* m )
 {
 
-    gather_dna( m_fx, m );
+    int len = gather_dna( m_fx, m );
     gather_dna( m_fy, this );
 
-    float dna[10000];
+    float dna[len];
 
-    combine( m_fx, m_fy, dna );
-    mutate( dna, 5 );
+    combine( m_fx, m_fy, dna, len );
+    mutate( dna, 5, len );
 
     Snake* baby = new Snake();
     place_dna( dna, baby );
@@ -70,28 +110,53 @@ Snake* Snake::procreate( Snake* m )
 }
 
 
-void Snake::combine( float* x, float* y, float* z )
+void Snake::combine( float* x, float* y, float* z, int len )
 {
 
     //::srand( time( NULL ) );
 
-    for( int i=0; i < 10000; i++ )
-    {
-        z[i] = x[i];
-    }
+//    int r = ::rand() % len;
 
-    for( int i=0; i < 10000; i++ )
-    {
-        if( ( ::rand() % 2 ) == 0 )
+    for( int i=0; i < len; i++ )
+        z[i] = x[i];
+/*
+    for( int i=0; i < len; i++ )
+        if( (::rand()%3) == 0 )
 		z[i] = y[i];
-    }
+*/
+
+    int i,r,c,rR,rC;
+
+    i=0; r=4; c=18;
+    rR = ::rand()%r;
+    rC = ::rand()%c;
+    for( int j=0; j<r; j++ )
+       for( int k=0; k<c; k++ )
+          if((j < rR) || (j == rR && k <= rC))
+             z[i+(r*j+k)] = y[i+(r*j+k)];
+
+    i+=4*18; r=18; c=18;
+    rR = ::rand()%r;
+    rC = ::rand()%c;
+    for( int j=0; j<r; j++ )
+       for( int k=0; k<c; k++ )
+          if((j < rR) || (j == rR && k <= rC))
+            z[i+(r*j+k)] = y[i+(r*j+k)];
+
+    i+=18*18; r=18; c=24;
+    rR = ::rand()%r;
+    rC = ::rand()%c;
+    for( int j=0; j<r; j++ )
+       for( int k=0; k<c; k++ )
+          if((j < rR) || (j == rR && k <= rC))
+            z[i+(r*j+k)] = y[i+(r*j+k)];
 
 }
 
-void Snake::mutate( float* dna, int percent )
+void Snake::mutate( float* dna, int percent, int len )
 {
 
-    for( int i=0; i < 10000; i++ )
+    for( int i=0; i < len; i++ )
     {
         if( (::rand() % (100 / percent) ) == 0 )
             dna[i] = rnd.get_double_in_range( .0, .9999 );
@@ -132,16 +197,21 @@ int Snake::gather_dna( float* dna, Snake* s )
     int x=0;
 
     auto w1 = layer< tag1 >( s->get_net() ).subnet().layer_details().get_weights();
+    //cout << "(" << w1.nr() << "," << w1.nc() << ":" << w1.size() << ")" << w1.k() << " ";
     int s1 = w1.size();
+    //int x1 = w1.k();
+    //int y1 = s1 / x1;
     for( int i=0; i < s1; i++ )
        dna[x++] = w1.host()[i];
 
     auto w2 = layer< tag2 >( s->get_net() ).subnet().layer_details().get_weights();
+    //cout << "(" << w2.nr() << "," << w2.nc() << ":" << w2.size() << ")" << w2.k() << " ";
     int s2 = w2.size();
     for( int i=0; i < s2; i++ )
        dna[x++] = w2.host()[i];
 
     auto w3 = layer< tag3 >( s->get_net() ).subnet().layer_details().get_weights();
+    //cout << "(" << w3.nr() << "," << w3.nc() << ":" << w3.size() << ")" << w3.k() << " ";
     int s3 = w3.size();
     for( int i=0; i < s3; i++ )
        dna[x++] = w3.host()[i];
@@ -179,10 +249,10 @@ int Snake::place_dna( float* dna, Snake* s )
 
 
 
-void Snake::movesnake( int wx, int wy, int fx, int fy )
+void Snake::move()
 {
-    //int wx = 36;
-    //int wy = 48;
+    int wx = m_wx;
+    int wy = m_wy;
     
     m_moves++;
     m_moves_left--;
@@ -197,13 +267,13 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
     auto hit_wall = [&] (const part& h) -> bool {
 
         
-        if( h.x == 0 )
+        if( h.x <= 0 )
             return true;
-        else if( h.y == 0 )
+        else if( h.y <= 0 )
             return true;
-        else if( h.x == wx )
+        else if( h.x >= wx )
             return true;
-        else if( h.y == wy )
+        else if( h.y >= wy )
             return true;
         
         return false;
@@ -252,7 +322,7 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
             }
 
             
-            if( lx == fx && ly == fy )
+            if( lx == m_food.x && ly == m_food.y )
             {
                 df = sqrt( std::pow( (p.x - lx), 2.0 ) + std::pow( (p.y - ly), 2.0 ) );
                 return make_pair( 2, df );
@@ -297,8 +367,11 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
     std::vector< input_matrix_type > vecMats = { m_imat };
     direction = net( vecMats )[0];
    
-    
-    auto back_part( m_snake.back() );
+   
+    //cout << " " << m_snake.size() << endl;
+ 
+    part back_part( m_snake.back() );
+
 
     m_oldpart = back_part;
     
@@ -326,16 +399,52 @@ void Snake::movesnake( int wx, int wy, int fx, int fy )
         m_dead = true;
         return;
     }
-    else if( p.x == fx && p.y == fy )
+    else if( p.x == m_food.x && p.y == m_food.y )
     {
         m_got_food = true;
         m_moves_left += 100;
+        set_food();
     }
     else
         m_snake.pop_back();
     
     m_snake.push_front( p );
  
+}
+
+void Snake::set_food( int x, int y )
+{
+    if( x < 0 )
+        x = ::rand() % m_wx;
+
+    if( y < 0 )
+        y = ::rand() % m_wy;
+
+    m_food.x = x;
+    m_food.y = y;
+}
+
+void Snake::show()
+{
+    ::clear();
+    ::refresh();
+
+    do
+    {
+        mvaddch( m_food.x, m_food.y, '#' );
+
+        mvaddch( m_oldpart.x, m_oldpart.y, ' ' );
+
+        for( auto p : m_snake )
+            mvaddch( p.x, p.y, '0' );
+
+        ::refresh();
+
+        dlib::sleep( 60 );
+
+        move();
+
+    } while( !dead() );
 }
 
 

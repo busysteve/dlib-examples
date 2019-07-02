@@ -11,6 +11,8 @@
 #include <thread>
 #include <chrono>
 #include <sstream>
+#include <curses.h>
+
 
 
 using namespace dlib;
@@ -79,11 +81,14 @@ class Snake
 {
 
     dlib::rand rnd;
+    int m_wx;
+    int m_wy;
     int m_mx;
     int m_my;
     int m_moves_left;
     int m_moves;
     part m_oldpart;
+    part m_food;
     bool m_dead;
     bool m_print;
     bool m_got_food;
@@ -112,16 +117,20 @@ class Snake
 	//thread  thx; //( void(*), Cool* );
 public:
     Snake(  );
-    void init( int wx, int wy, const char* snake_net_file );
-    void movesnake( int x, int y, int fx, int fy );
-
-    void combine( float*, float*, float* );
-    void mutate( float*, int );
+    Snake( Snake* s );
+    ~Snake( );
+    void init( int wx, int wy, int x=-1, int y=-1 );
+    void move();
+    Snake* clone();
+    void combine( float*, float*, float*, int );
+    void mutate( float*, int, int );
     Snake* procreate( Snake* m );
     int read_snake( const char* snake_file, char* membuf );
     void write_snake( const char* snake_file, const char* membuf, int len );
     int gather_dna( float* dna, Snake* s );
     int place_dna( float* dna, Snake* s );
+
+    bool replay = 0;
 
     std::deque< part >  m_snake;
     
@@ -164,15 +173,31 @@ public:
  
     double score()
     {
+        return m_snake.size()-2;
+    }
+
+    double fitness()
+    {
         //return 1000 * m_snake.size() + m_moves*m_moves;
 
-        int scor = m_snake.size()-1;
+        int scor = score();
+        
+        if( scor < 10 )
+           return m_moves*m_moves*pow(2, scor );
+        else
+           return m_moves*m_moves*pow(2, scor )*(scor-9);
+    }
 
-        return m_moves*m_moves*pow(2, scor )*m_moves_left;
+    double calculateFitness()
+    {
+        return fitness();
     }
 
     bool dead() { return m_dead; }
     bool got_food() { return m_got_food; }
     bool print( bool p ) { m_print = p; }
+    void set_food( int x=-1, int y=-1 );
+    void show();
+
     
 };
