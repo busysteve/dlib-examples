@@ -21,6 +21,7 @@ Snake::Snake( )
     , trainer( net )
 {
     //cout << " $ ";
+    randomize( this );
 }
 
 Snake::Snake( Snake* s )
@@ -53,10 +54,10 @@ void Snake::init( int wx, int wy, int x, int y )
     m_wy = wy;
 
     if( x < 0 )
-        x = ::rand()%wx;
+        x = rnd.get_integer(wx);
 
     if( y < 0 )
-        y = ::rand()%wy;
+        y = rnd.get_integer(wy);
 
     m_moves_left = 500;
     m_moves = 0;
@@ -76,7 +77,7 @@ void Snake::init( int wx, int wy, int x, int y )
     m_snake.push_back( part(x,y) );
 
 
-    set_food( ::rand()%wx, ::rand()%wy );
+    set_food( );
 
 }
 
@@ -99,7 +100,7 @@ Snake* Snake::procreate( Snake* m )
     float dna[len];
 
     combine( m_fx, m_fy, dna, len );
-    mutate( dna, 5, len );
+    mutate( dna, 8, len );
 
     Snake* baby = new Snake();
     place_dna( dna, baby );
@@ -128,24 +129,24 @@ void Snake::combine( float* x, float* y, float* z, int len )
     int i,r,c,rR,rC;
 
     i=0; r=4; c=18;
-    rR = ::rand()%r;
-    rC = ::rand()%c;
+    rR = rnd.get_integer(r);
+    rC = rnd.get_integer(c);
     for( int j=0; j<r; j++ )
        for( int k=0; k<c; k++ )
           if((j < rR) || (j == rR && k <= rC))
              z[i+(r*j+k)] = y[i+(r*j+k)];
 
     i+=4*18; r=18; c=18;
-    rR = ::rand()%r;
-    rC = ::rand()%c;
+    rR = rnd.get_integer(r);
+    rC = rnd.get_integer(c);
     for( int j=0; j<r; j++ )
        for( int k=0; k<c; k++ )
           if((j < rR) || (j == rR && k <= rC))
             z[i+(r*j+k)] = y[i+(r*j+k)];
 
     i+=18*18; r=18; c=24;
-    rR = ::rand()%r;
-    rC = ::rand()%c;
+    rR = rnd.get_integer(r);
+    rC = rnd.get_integer(c);
     for( int j=0; j<r; j++ )
        for( int k=0; k<c; k++ )
           if((j < rR) || (j == rR && k <= rC))
@@ -158,7 +159,7 @@ void Snake::mutate( float* dna, int percent, int len )
 
     for( int i=0; i < len; i++ )
     {
-        if( (::rand() % (100 / percent) ) == 0 )
+        if( ( rnd.get_integer(100 / percent) ) == 0 )
             dna[i] = rnd.get_double_in_range( .0, .9999 );
     }
 
@@ -243,6 +244,32 @@ int Snake::place_dna( float* dna, Snake* s )
 
 
     return x;
+}
+
+
+void Snake::randomize( Snake* s )
+{
+
+
+    auto w1 = layer< tag1 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s1 = w1.size();
+    for( int i=0; i < s1; i++ )
+       //w1.host()[i] = rnd.get_double_in_range( 0.0, 1.0 );
+       w1.host()[i] = rnd.get_double_in_range( -1.0, 1.0 );
+
+    auto w2 = layer< tag2 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s2 = w2.size();
+    for( int i=0; i < s2; i++ )
+       //w2.host()[i] = rnd.get_double_in_range( 0.0, 1.0 );
+       w2.host()[i] = rnd.get_double_in_range( -1.0, 1.0 );
+
+    auto w3 = layer< tag3 >( s->get_net() ).subnet().layer_details().get_weights();
+    int s3 = w3.size();
+    for( int i=0; i < s3; i++ )
+       //w3.host()[i] = rnd.get_double_in_range( 0.0, 1.0 );
+       w3.host()[i] = rnd.get_double_in_range( -1.0, 1.0 );
+
+
 }
 
 
@@ -415,10 +442,10 @@ void Snake::move()
 void Snake::set_food( int x, int y )
 {
     if( x < 0 )
-        x = ::rand() % m_wx;
+        x = rnd.get_integer(m_wx);
 
     if( y < 0 )
-        y = ::rand() % m_wy;
+        y = rnd.get_integer(m_wy);
 
     m_food.x = x;
     m_food.y = y;

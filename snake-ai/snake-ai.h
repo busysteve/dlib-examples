@@ -54,10 +54,17 @@ using net_type = loss_multiclass_log<
                                 tag2<relu<fc<18,  
                                 input<  input_matrix_type
                                 >>>>>>>>>;
-#else
+#elif 0
 using net_type = loss_multiclass_log<
                                 tag1<fc<4,relu<
                                 tag2<fc<18,relu<
+                                tag3<fc<18,
+                                input<  input_matrix_type
+                                >>>>>>>>>>;
+#else
+using net_type = loss_multiclass_log<
+                                tag1<fc<4,htan<
+                                tag2<fc<18,htan<
                                 tag3<fc<18,
                                 input<  input_matrix_type
                                 >>>>>>>>>>;
@@ -198,6 +205,7 @@ public:
     bool print( bool p ) { m_print = p; }
     void set_food( int x=-1, int y=-1 );
     void show();
+    void randomize( Snake* );
 
     
 };
