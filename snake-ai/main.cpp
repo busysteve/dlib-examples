@@ -30,7 +30,7 @@ using namespace dlib;
 int main( int argc, char** argv )
 {
 
-    if( argc != 5 )
+    if( argc < 5 )
     {
         printf("%s [width] [height] [population] [threads]\n ", argv[0] );
         exit(0);
