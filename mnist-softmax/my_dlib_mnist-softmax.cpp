@@ -271,7 +271,7 @@ int main(int argc, char** argv) try
 				print_image( testing_images[i], testing_labels[i], predicted_labels[i] );
 				//print_image( testing_images[i], testing_labels[i], sp[i] );
 				//matrix<float,1,10> sp = sum_rows(mat(snet(testing_images.begin()+i, testing_images.begin()+(i+1))));
-				matrix<float,1,10> sp = (mat(snet(testing_images.begin()+i, testing_images.begin()+(i+1))));
+				matrix<float,1,10> sp = mat(snet(testing_images.begin()+i, testing_images.begin()+(i+1)));
 				print_probs( sp, i );
 			}
 		

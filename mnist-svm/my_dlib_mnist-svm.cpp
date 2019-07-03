@@ -243,7 +243,17 @@ int main(int argc, char** argv) try
     typedef svm_multiclass_linear_trainer<kernel_type, label_type> trainer_type;
 
 	trainer_type svm_trainer;
+    
+    cout << "e = " << svm_trainer.get_epsilon() << endl;
+    
+    svm_trainer.set_epsilon(.00001);
+    svm_trainer.set_c(50);
+    svm_trainer.set_num_threads(7);
+    svm_trainer.be_verbose();
 
+    cout << "C = " << svm_trainer.get_c() << endl;
+    cout << "e = " << svm_trainer.get_epsilon() << endl;
+    cout << "max_iters = " << svm_trainer.get_max_iterations() << endl;
 
 //	typedef one_vs_one_trainer<any_trainer<sample_type> > ovo_trainer;
 //	ovo_trainer svm_trainer;
