@@ -10,6 +10,10 @@
 
 extern int delay;
 extern bool warp;
+extern int mutation;
+extern int generation;
+extern int highscore;
+
 
 Snake::Snake( )
 	: rnd( ::time(NULL) )
@@ -473,6 +477,10 @@ void Snake::show()
 
     for( int i=0; i<m_wy; i++)
         ::mvprintw( m_wx, i, "*" );
+
+    ::mvprintw( m_wy + 1, 5, "high score: %d", ::highscore );
+    ::mvprintw( m_wy + 2, 5, "generation: %d", ::generation );
+    ::mvprintw( m_wy + 3, 5, "mutation:   %d%%", ::mutation );
 
     do
     {
