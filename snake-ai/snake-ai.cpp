@@ -143,7 +143,7 @@ void Snake::combine( float* x, float* y, float* z, int len )
           if((j < rR) || (j == rR && k <= rC))
              z[i+(r*j+k)] = y[i+(r*j+k)];
 
-    i+=4*18; r=18; c=18;
+    i+=r*c; r=18; c=18;
     rR = rnd.get_integer(r);
     rC = rnd.get_integer(c);
     for( int j=0; j<r; j++ )
@@ -151,13 +151,14 @@ void Snake::combine( float* x, float* y, float* z, int len )
           if((j < rR) || (j == rR && k <= rC))
             z[i+(r*j+k)] = y[i+(r*j+k)];
 
-    i+=18*18; r=18; c=24;
+    i+=r*c; r=18; c=24;
     rR = rnd.get_integer(r);
     rC = rnd.get_integer(c);
     for( int j=0; j<r; j++ )
        for( int k=0; k<c; k++ )
           if((j < rR) || (j == rR && k <= rC))
             z[i+(r*j+k)] = y[i+(r*j+k)];
+
 
 }
 

@@ -50,7 +50,7 @@ int snake_ix = 0;
     
    }
 
-   Population::Population(int wx, int wy, int size, int xx) : rnd( ::time(NULL) ), 
+   Population::Population(int wx, int wy, int size, int xx, std::string filename ) : rnd( ::time(NULL) ), 
         m_wx( wx ), m_wy( wy )
    {
 
@@ -68,8 +68,18 @@ int snake_ix = 0;
 
       initializeSnakes( m_wx, m_wy, m_wx, m_wy );
 
+      if( filename.length() > 0 )
+      try {
+          deserialize( filename ) >> bestSnake->get_net();
+      } catch(...){};
+
 
       auto user_control = [&] {
+
+          std::string file = filename;
+
+          if( file.empty() )
+              file = "nameless_snake.net";
 
           while( true )
           {
@@ -101,7 +111,7 @@ int snake_ix = 0;
                   endwin();
                   exit(0);
               }
-              if( ch == 'm' )
+              else if( ch == 'm' )
               {
                   if( --::mutation < 1 )
                       ::mutation = 0;
@@ -110,6 +120,12 @@ int snake_ix = 0;
               {
                   if( ++::mutation > 99 )
                       ::mutation = 100;
+              }
+              else if( ch == 's' )
+              {
+                  try {
+                  	serialize( file ) << bestSnake->get_net();
+                  } catch(...) {}
               }
 
 
