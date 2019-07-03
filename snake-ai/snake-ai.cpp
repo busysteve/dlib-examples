@@ -8,6 +8,9 @@
 
 //std::vector< la::la_vector<double> > vecs;
 
+extern int delay;
+extern bool warp;
+
 Snake::Snake( )
 	: rnd( ::time(NULL) )
     , m_hiscore(0)
@@ -100,7 +103,7 @@ Snake* Snake::procreate( Snake* m )
     float dna[len];
 
     combine( m_fx, m_fy, dna, len );
-    mutate( dna, 8, len );
+    mutate( dna, 5, len );
 
     Snake* baby = new Snake();
     place_dna( dna, baby );
@@ -442,10 +445,10 @@ void Snake::move()
 void Snake::set_food( int x, int y )
 {
     if( x < 0 )
-        x = rnd.get_integer(m_wx);
+        x = 1+rnd.get_integer(m_wx-1);
 
     if( y < 0 )
-        y = rnd.get_integer(m_wy);
+        y = 1+rnd.get_integer(m_wy-1);
 
     m_food.x = x;
     m_food.y = y;
@@ -453,11 +456,28 @@ void Snake::set_food( int x, int y )
 
 void Snake::show()
 {
+    if( ::warp == true )
+       return;
+
     ::clear();
     ::refresh();
 
+    for( int i=0; i<m_wx; i++)
+        ::mvprintw( i, 0, "*" );
+
+    for( int i=0; i<m_wx; i++)
+        ::mvprintw( i, m_wy, "*" );
+
+    for( int i=0; i<m_wy; i++)
+        ::mvprintw( 0, i, "*" );
+
+    for( int i=0; i<m_wy; i++)
+        ::mvprintw( m_wx, i, "*" );
+
     do
     {
+        move();
+
         mvaddch( m_food.x, m_food.y, '#' );
 
         mvaddch( m_oldpart.x, m_oldpart.y, ' ' );
@@ -467,11 +487,9 @@ void Snake::show()
 
         ::refresh();
 
-        dlib::sleep( 60 );
+        dlib::sleep( ::delay );
 
-        move();
-
-    } while( !dead() );
+    } while( !dead() && !::warp );
 }
 
 

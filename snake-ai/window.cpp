@@ -31,9 +31,9 @@ using namespace dlib;
 int main( int argc, char** argv )
 {
 
-    if( argc != 3 )
+    if( argc != 5 )
     {
-        printf("%s [population] [threads]\n ", argv[0] );
+        printf("%s [width] [height] [population] [threads]\n ", argv[0] );
         exit(0);
     }
 
@@ -47,13 +47,15 @@ int main( int argc, char** argv )
     ::clear();
 
  
-    int population = atoi( argv[1] );
-    int threads = atoi( argv[2] );
+    int wx = atoi( argv[1] );
+    int wy = atoi( argv[2] );
+    int population = atoi( argv[3] );
+    int threads = atoi( argv[4] );
 
 
-    Population pop( population, threads );
+    Population pop( wx, wy, population, threads );
 
-    pop.initializeSnakes( 38, 42, 38, 42 );
+    pop.initializeSnakes( wx, wy );
 
     pop.update();
     pop.show();
@@ -77,49 +79,8 @@ int main( int argc, char** argv )
             pop.handle_snakes();
             //pop.show();
         }
-        int ch = 0; // getch();
-        //mvprintw( 42, 20, "%c : %d", ch, ch );
-        
-        if( ch == 65 )
-        {
-            //my_window.sv().warp( false );
-            if( --delay < 0 )
-                delay = 0;
-            //my_window.delay_ms( delay );
-            //mvprintw( 42, 10, "Delay = %d", delay );
-            refresh();
-        }    
-        else if( ch == 66 )
-        {
-            //my_window.sv().warp( false );
-            if( ++delay > 100 )
-                delay = 100;
-            //my_window.delay_ms( delay );
-            //mvprintw( 41, 10, "Delay = %d", delay );
-            refresh();
-        }
-        else if( ch == 'w' )
-        {
-            //my_window.delay_ms( 1 );
-            //my_window.sv().warp( true );
-        }
-        else if( ch == 81 || ch == 113 )
-        {
-            refresh();
-            endwin();
-            exit(0);
-        }
 
-        //::refresh();
-
-        if( delay < 10 )
-            delay = 10;
-        else if( delay > 100 )
-            delay = 100;
-        
-
-
-        //dlib::sleep( 20 );
+        dlib::sleep( 10 );
     }
         ::sleep(10000);
 
