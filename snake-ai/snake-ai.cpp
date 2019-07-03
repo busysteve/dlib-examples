@@ -456,8 +456,8 @@ void Snake::set_food( int x, int y )
 
 void Snake::show()
 {
-    if( ::warp == true )
-       return;
+    //if( ::warp == true )
+    //   return;
 
     ::clear();
     ::refresh();
@@ -487,9 +487,10 @@ void Snake::show()
 
         ::refresh();
 
-        dlib::sleep( ::delay );
+        if( ::warp == false )
+            dlib::sleep( ::delay );
 
-    } while( !dead() && !::warp );
+    } while( !dead() );
 }
 
 
